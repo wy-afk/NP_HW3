@@ -1,0 +1,19 @@
+# common/messages.py
+WELCOME = "WELCOME"
+HELLO = "HELLO"
+INPUT = "INPUT"
+SNAPSHOT = "SNAPSHOT"
+TEMPO = "TEMPO"
+RESULT = "RESULT"
+REMATCH = "REMATCH"
+OPP_LEFT = "OPP_LEFT"
+ERROR = "ERROR"
+
+# Input actions
+LEFT = "LEFT"
+RIGHT = "RIGHT"
+ROTATE_CW = "CW"
+HARD_DROP = "HD"
+SOFT_TICK = "TICK"  # internal tick advance
+HOLD = "HOLD"
+FLASH = "FLASH"

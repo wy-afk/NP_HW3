@@ -1,141 +1,98 @@
 # server/room_manager.py
-from typing import Dict, List, Optional
-from game_launcher import GameLauncher
+from dataclasses import dataclass, field
+from typing import Dict, Optional
+
+
+@dataclass
+class Room:
+    room_id: int
+    game_id: int
+    host: str
+    type: str  # "public" or "private"
+    players: list = field(default_factory=list)
+    status: str = "waiting"  # waiting / running
+    port: Optional[int] = None
 
 
 class RoomManager:
-    """
-    Manages lobby rooms and launches game servers.
-    Room structure:
-    {
-        "room_id": int,
-        "host": str,
-        "game_id": int,
-        "players": [str],
-        "status": "waiting" | "in_game",
-        "port": int | None,
-        "proc": subprocess.Popen | None
-    }
-    """
 
-    def __init__(self, store_manager=None):
-        self.rooms: Dict[int, dict] = {}
-        self._next_room_id = 1
+    def __init__(self):
+        self.rooms: Dict[int, Room] = {}
+        self.next_room_id = 1
+        self.launcher = None
 
-        # store_manager reference will be provided by LobbyServer
-        self.store = store_manager
+    def attach_launcher(self, launcher):
+        self.launcher = launcher
 
-        # game launcher handles actual subprocess starting
-        self.launcher = GameLauncher()
+    # -------------------------------------------------------
+    # Create room
+    # -------------------------------------------------------
+    def create_room(self, game_id: int, username: str, room_type: str):
+        room_id = self.next_room_id
+        self.next_room_id += 1
 
-    # ----------------------------------------------------------------------
-    # Helpers
-    # ----------------------------------------------------------------------
-    def _new_room_id(self) -> int:
-        rid = self._next_room_id
-        self._next_room_id += 1
-        return rid
-
-    def attach_store_manager(self, store_manager):
-        """Called by LobbyServer so RoomManager can fetch game metadata."""
-        self.store = store_manager
-
-    # ----------------------------------------------------------------------
-    # Room list
-    # ----------------------------------------------------------------------
-    def list_rooms(self) -> List[dict]:
-        return list(self.rooms.values())
-
-    # ----------------------------------------------------------------------
-    # Create a new room
-    # ----------------------------------------------------------------------
-    def create_room(self, host: str, game_id: int) -> dict:
-        room_id = self._new_room_id()
-        room = {
-            "room_id": room_id,
-            "host": host,
-            "game_id": game_id,
-            "players": [host],
-            "status": "waiting",
-            "port": None,
-            "proc": None
-        }
+        room = Room(room_id, game_id, username, room_type)
+        room.players.append(username)  # host joins automatically
 
         self.rooms[room_id] = room
-        print(f"[RoomManager] Created room {room_id} for game {game_id}.")
         return room
 
-    # ----------------------------------------------------------------------
-    # Join an existing room
-    # ----------------------------------------------------------------------
-    def join_room(self, room_id: int, username: str) -> Optional[dict]:
-        room = self.rooms.get(room_id)
-        if not room:
-            print(f"[RoomManager] join_room failed: room {room_id} not found.")
-            return None
+    # -------------------------------------------------------
+    # Join room
+    # -------------------------------------------------------
+    def join_room(self, room_id: int, username: str):
+        if room_id not in self.rooms:
+            return False, "Room does not exist."
 
-        if room["status"] != "waiting":
-            print(f"[RoomManager] join_room failed: room {room_id} already started.")
-            return None
+        room = self.rooms[room_id]
 
-        if username not in room["players"]:
-            room["players"].append(username)
-            print(f"[RoomManager] {username} joined room {room_id}.")
+        if room.status != "waiting":
+            return False, "Room already started."
 
-        return room
+        if len(room.players) >= 2:
+            return False, "Room already full (2 players)."
 
-    # ----------------------------------------------------------------------
-    # Start game (host triggers this)
-    # ----------------------------------------------------------------------
-    def start_game(self, room_id: int) -> Optional[dict]:
-        room = self.rooms.get(room_id)
-        if not room:
-            print(f"[RoomManager] start_game failed: no room {room_id}.")
-            return None
+        # PRIVATE ROOM RULE: ONLY HOST CAN JOIN
+        if room.type == "private" and username != room.host:
+            return False, "This is a private room. Only the host may join."
 
-        if room["status"] == "in_game":
-            return room
+        # PUBLIC ROOM: anyone can join
+        room.players.append(username)
+        return True, f"{username} joined room {room_id}"
 
-        # get the correct game metadata
-        if not self.store:
-            raise RuntimeError("RoomManager has no store_manager attached.")
+    # -------------------------------------------------------
+    # Start game
+    # -------------------------------------------------------
+    def start_game(self, room_id: int):
+        if room_id not in self.rooms:
+            return False, "Room does not exist."
 
-        game = self.store.get_game(room["game_id"])
-        if not game:
-            print(f"[RoomManager] start_game failed: unknown game_id {room['game_id']}.")
-            return None
+        room = self.rooms[room_id]
+        if len(room.players) < 2:
+            return False, "Need 2 players to start."
 
-        # launch the game server
-        port, proc = self.launcher.launch_game_server(game, room_id)
+        if self.launcher is None:
+            return False, "GameLauncher not attached."
 
-        room["status"] = "in_game"
-        room["port"] = port
-        room["proc"] = proc
+        ok, port_or_err = self.launcher.launch(room)
+        if not ok:
+            return False, port_or_err
 
-        print(f"[RoomManager] Room {room_id} started game on port {port}.")
-        return room
+        room.status = "running"
+        room.port = port_or_err
+        return True, room.port
 
-    # ----------------------------------------------------------------------
-    # End game + cleanup room
-    # ----------------------------------------------------------------------
-    def end_game(self, room_id: int):
-        room = self.rooms.get(room_id)
-        if not room:
-            print(f"[RoomManager] end_game: room {room_id} not found.")
-            return
-
-        # terminate server process
-        proc = room.get("proc")
-        self.launcher.stop_game_server(proc)
-
-        print(f"[RoomManager] Closing room {room_id}.")
-        self.rooms.pop(room_id, None)
-
-    # ----------------------------------------------------------------------
-    # Remove all rooms if server shuts down
-    # ----------------------------------------------------------------------
-    def cleanup(self):
-        for room_id, room in list(self.rooms.items()):
-            proc = room.get("proc")
-            self.launcher.stop_game_server(proc)
-        self.rooms.clear()
+    # -------------------------------------------------------
+    def list_rooms(self):
+        data = []
+        for r in self.rooms.values():
+            data.append({
+                "room_id": r.room_id,
+                "game_id": r.game_id,
+                "host": r.host,
+                "players": list(r.players),
+                "type": r.type,
+                "status": r.status,
+                "port": r.port
+            })
+        return data

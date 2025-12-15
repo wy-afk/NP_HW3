@@ -9,42 +9,10 @@
   },
   {
     "game_id": 2,
-    "name": "Battleship",
+    "name": "Tetris",
     "version": "1.0",
     "developer": "dev1",
-    "path": "server/game_storage/Battleship/1.0",
-    "description": "Battleship version 1.0"
-  },
-  {
-    "game_id": 3,
-    "name": "",
-    "version": "1.0",
-    "developer": "dev1",
-    "path": "server/game_storage/1.0",
-    "description": " version 1.0"
-  },
-  {
-    "game_id": 4,
-    "name": "",
-    "version": "1.0",
-    "developer": "dev1",
-    "path": "server/game_storage/1.0",
-    "description": " version 1.0"
-  },
-  {
-    "game_id": 5,
-    "name": "Battleship",
-    "version": "1.0",
-    "developer": "dev1",
-    "path": "server/game_storage/Battleship/1.0",
-    "description": "Battleship version 1.0"
-  },
-  {
-    "game_id": 6,
-    "name": "Battleship",
-    "version": "1.0",
-    "developer": "dev1",
-    "path": "server/game_storage/Battleship/1.0",
-    "description": "Battleship version 1.0"
+    "path": "server/game_storage/Tetris/1.0",
+    "description": "Tetris version 1.0"
   }
 ]
