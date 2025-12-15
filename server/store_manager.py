@@ -32,8 +32,8 @@ class StoreManager:
         "name": "Battleship",
         "version": "1.0",
         "developer": "dev_user",
-        "path": "games/Battleship/1.0",
-        "description": "..."
+        "path": "server/game_storage/Battleship/1.0",
+        "description": "...",
       },
       ...
     ]
@@ -48,7 +48,7 @@ class StoreManager:
     def _find_game(self, game_id: int) -> Optional[dict]:
         return next((g for g in self.games if g["game_id"] == game_id), None)
 
-    # ---------- API used by LobbyServer / dev client ----------
+    # ---------- API ----------
 
     def list_games(self) -> list[dict]:
         return self.games
@@ -61,9 +61,6 @@ class StoreManager:
         path: str,
         description: str = "",
     ) -> dict:
-        """
-        For now, assume files are already in place (later you handle upload).
-        """
         game = {
             "game_id": self._next_id,
             "name": name,
@@ -87,12 +84,16 @@ class StoreManager:
         return True
 
     def remove_game(self, game_id: int, developer: str) -> bool:
-        """
-        Only allow owner (developer) to remove their game.
-        """
         game = self._find_game(game_id)
         if not game or game["developer"] != developer:
             return False
         self.games = [g for g in self.games if g["game_id"] != game_id]
         _save_json(GAMES_FILE, self.games)
         return True
+
+    # ---------- REQUIRED: get_game ----------
+    def get_game(self, game_id: int):
+        for g in self.games:
+            if g["game_id"] == game_id:
+                return g
+        return None
