@@ -1,23 +1,37 @@
 {
   "test1": {
-    "password": "1234"
+    "password": "1234",
+    "wins": 0,
+    "played": 0
   },
   "dev1": {
-    "password": "1234"
+    "password": "1234",
+    "wins": 0,
+    "played": 0
   },
   "dev2": {
-    "password": "1234"
+    "password": "1234",
+    "wins": 0,
+    "played": 0
   },
   "user1": {
-    "password": "1234"
+    "password": "1234",
+    "wins": 0,
+    "played": 0
   },
   "user2": {
-    "password": "1234"
+    "password": "1234",
+    "wins": 0,
+    "played": 0
   },
   "u1": {
-    "password": "123"
+    "password": "123",
+    "wins": 3,
+    "played": 8
   },
   "u2": {
-    "password": "123"
+    "password": "123",
+    "wins": 2,
+    "played": 8
   }
 }

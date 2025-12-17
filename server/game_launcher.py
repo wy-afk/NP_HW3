@@ -1,6 +1,7 @@
 # server/game_launcher.py
 import subprocess
 import random
+import time
 from pathlib import Path
 
 class GameLauncher:
@@ -24,18 +25,27 @@ class GameLauncher:
 
         port = random.randint(30000, 60000)
 
+        # Base command
         cmd = [
             "python3",
             str(server_script),
             "--host", self.host,
             "--port", str(port),
-            "--room", str(room.room_id)
         ]
+        
+        # Tetris supports additional arguments
+        # Pass room id to game servers so they can report results back
+        if game_name.lower() == "tetris":
+            cmd.extend(["--room-id", str(room.room_id)])
+        if game_name.lower() == "battleship":
+            cmd.extend(["--room-id", str(room.room_id)])
 
-        print(f"[GameLauncher] Starting game server: {server_script} on port {port}")
+        print(f"[GameLauncher] Starting {game_name} server: {server_script} on port {port}")
 
         try:
             subprocess.Popen(cmd)
+            # Give the server time to start up (slightly longer to avoid races)
+            time.sleep(1.2)
             return True, port
         except Exception as e:
             return False, str(e)

@@ -459,6 +459,44 @@ def handle_game(room_id, host, port, seed,
             except Exception:
                 pass
 
+        # Report results back to lobby (retry with exponential backoff)
+        def _report_to_lobby(winners, players, attempts=4, base_delay=0.25):
+            import socket as _socket, json as _json, struct as _struct, time as _time
+            payload = {"action": "record_result", "data": {"winners": winners, "players": players}}
+            b = _json.dumps(payload).encode("utf-8")
+            hdr = _struct.pack("!I", len(b))
+            for attempt in range(attempts):
+                try:
+                    s2 = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+                    s2.settimeout(1.0)
+                    s2.connect(("127.0.0.1", 5555))
+                    s2.sendall(hdr + b)
+                    # wait for response header
+                    rh = s2.recv(4)
+                    if not rh:
+                        s2.close()
+                        raise RuntimeError("no response")
+                    (ln,) = _struct.unpack("!I", rh)
+                    resp = s2.recv(ln).decode()
+                    try:
+                        jr = _json.loads(resp)
+                        if jr.get("status") == "ok":
+                            s2.close()
+                            return True
+                    except Exception:
+                        pass
+                    s2.close()
+                except Exception:
+                    # backoff
+                    _time.sleep(base_delay * (2 ** attempt))
+                    continue
+            return False
+
+        try:
+            _report_to_lobby(winners, list(game.players.keys()))
+        except Exception:
+            pass
+
     finally:
         # Clean-up: close all sockets and server
         for cc in (p1, p2):

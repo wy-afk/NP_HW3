@@ -2,6 +2,7 @@ import socket
 import json
 import argparse
 import random
+import time
 
 BOARD_SIZE = 10
 
@@ -163,10 +164,45 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", required=True)
     parser.add_argument("--port", type=int, required=True)
+    parser.add_argument("--user", required=False, default="Player")
+    parser.add_argument("--room", required=False, default="1")
     args = parser.parse_args()
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((args.host, args.port))
+    # Robust retry loop to avoid racing the freshly-launched game server.
+    # Use exponential backoff capped at a few seconds so slow startups still succeed.
+    last_err = None
+    s = None
+    attempts = 0
+    max_attempts = 30
+    while attempts < max_attempts:
+        attempts += 1
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(3.0)
+            s.connect((args.host, args.port))
+            break
+        except Exception as e:
+            last_err = e
+            try:
+                s.close()
+            except Exception:
+                pass
+            s = None
+            # backoff: grow by factor 1.5, start 0.25s, cap 3.0s
+            backoff = min(0.25 * (1.5 ** attempts), 3.0)
+            print(f"[Battleship] Connect attempt {attempts}/{max_attempts} failed: {e}; retrying in {backoff:.2f}s")
+            time.sleep(backoff)
+
+    if s is None:
+        raise ConnectionRefusedError(f"Could not connect to game server {args.host}:{args.port}: {last_err}")
+
+    # Send HELLO so the server knows our username
+    # Clear timeout so subsequent recv() calls block normally during gameplay
+    try:
+        s.settimeout(None)
+    except Exception:
+        pass
+    send_json(s, {"type": "HELLO", "user": args.user, "roomId": args.room})
 
     # Receive role
     role_msg = recv_json(s)
@@ -235,11 +271,17 @@ def main():
             print_board(my_board, "Your Board (After attack)")
 
         elif t == "WIN":
+            boat = msg.get("boat")
             print("\n🎉 YOU WIN! 🎉")
+            if boat:
+                print(f"You sank the {boat}!")
             break
 
         elif t == "LOSE":
+            boat = msg.get("boat")
             print("\n❌ YOU LOSE ❌")
+            if boat:
+                print(f"Your {boat} was sunk by the opponent.")
             break
 
     s.close()

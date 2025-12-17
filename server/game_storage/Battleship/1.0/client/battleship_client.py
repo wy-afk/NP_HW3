@@ -154,10 +154,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", required=True)
     parser.add_argument("--port", type=int, required=True)
+    parser.add_argument("--user", required=False, default="Player")
+    parser.add_argument("--room", required=False, default="1")
     args = parser.parse_args()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((args.host, args.port))
+
+    # Send HELLO so the server knows our username
+    send_json(s, {"type": "HELLO", "user": args.user, "roomId": args.room})
 
     # Receive role
     role_msg = recv_json(s)

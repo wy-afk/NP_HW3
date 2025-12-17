@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 import threading
+import os
 import pygame
 import sys
 import time
@@ -39,6 +40,12 @@ def draw_rect(surf, color, x, y, w, h, radius=6):
 
 class GUI:
     def __init__(self, sock, spectator=False):
+        # Try to center the window on screen so it is visible (avoids off-screen
+        # windows on multi-monitor setups). Also prefer not to use SCALED on
+        # Wayland because some SDL builds produce tiny logical windows there.
+        os.environ.setdefault("SDL_VIDEO_CENTERED", "1")
+        wayland = bool(os.environ.get("WAYLAND_DISPLAY"))
+
         pygame.init()
         pygame.display.set_caption("Tetris — Versus Mode")
         self.sock = sock
@@ -80,7 +87,31 @@ class GUI:
         total_w = (board_w_px * 2) + (side_panel_w * 2) + (pad * 4) + GAP
         total_h = board_h_px + pad * 2
 
-        self.screen = pygame.display.set_mode((total_w, total_h))
+        # Use SCALED where available (improves DPI scaling on many setups),
+        # but avoid SCALED under Wayland which sometimes results in tiny windows
+        # with certain SDL2 builds. Always allow resizing.
+        flags = pygame.RESIZABLE
+        if not wayland:
+            try:
+                flags |= pygame.SCALED
+            except Exception:
+                pass
+
+        # Ensure environment positions window centered (SDL respects this)
+        os.environ.setdefault("SDL_VIDEO_WINDOW_POS", "center")
+
+        self.screen = pygame.display.set_mode((total_w, total_h), flags)
+
+        # Final sanity: if the created surface is unexpectedly small, scale up
+        # the displayed surface to a reasonable minimum so content is visible.
+        try:
+            w, h = self.screen.get_size()
+            min_w, min_h = 800, 480
+            if w < min_w or h < min_h:
+                # Attempt to resize to sane defaults
+                self.screen = pygame.display.set_mode((max(w, min_w), max(h, min_h)), flags)
+        except Exception:
+            pass
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(FONT_NAME, 18)
         self.font_b = pygame.font.SysFont(FONT_NAME, 22, bold=True)

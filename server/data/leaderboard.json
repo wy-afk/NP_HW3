@@ -1,0 +1,46 @@
+{
+  "leaderboard": [
+    {
+      "rank": 1,
+      "username": "u1",
+      "wins": 3,
+      "played": 8
+    },
+    {
+      "rank": 2,
+      "username": "u2",
+      "wins": 2,
+      "played": 8
+    },
+    {
+      "rank": 3,
+      "username": "dev1",
+      "wins": 0,
+      "played": 0
+    },
+    {
+      "rank": 3,
+      "username": "dev2",
+      "wins": 0,
+      "played": 0
+    },
+    {
+      "rank": 3,
+      "username": "test1",
+      "wins": 0,
+      "played": 0
+    },
+    {
+      "rank": 3,
+      "username": "user1",
+      "wins": 0,
+      "played": 0
+    },
+    {
+      "rank": 3,
+      "username": "user2",
+      "wins": 0,
+      "played": 0
+    }
+  ]
+}

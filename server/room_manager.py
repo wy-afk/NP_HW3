@@ -20,6 +20,8 @@ class RoomManager:
         self.rooms: Dict[int, Room] = {}
         self.next_room_id = 1
         self.launcher = None
+        # invitations: room_id -> set(usernames)
+        self.invites: Dict[int, set] = {}
 
     def attach_launcher(self, launcher):
         self.launcher = launcher
@@ -59,6 +61,63 @@ class RoomManager:
         # PUBLIC ROOM: anyone can join
         room.players.append(username)
         return True, f"{username} joined room {room_id}"
+
+    # -------------------------------------------------------
+    # Invite management for PRIVATE rooms
+    # -------------------------------------------------------
+    def invite_user(self, room_id: int, host: str, target: str):
+        if room_id not in self.rooms:
+            return False, "Room does not exist."
+        room = self.rooms[room_id]
+        if room.host != host:
+            return False, "Only the host can invite users."
+        if room.type != "private":
+            return False, "Invites are only for private rooms."
+        if target in room.players:
+            return False, "User already in room."
+        self.invites.setdefault(room_id, set()).add(target)
+        return True, f"{target} invited to room {room_id}"
+
+    def list_invites_for(self, username: str):
+        # return list of room summaries where username is invited
+        data = []
+        for rid, targets in self.invites.items():
+            if username in targets:
+                r = self.rooms.get(rid)
+                if r:
+                    data.append({
+                        "room_id": r.room_id,
+                        "game_id": r.game_id,
+                        "host": r.host,
+                        "type": r.type,
+                    })
+        return data
+
+    def accept_invite(self, room_id: int, username: str):
+        if room_id not in self.rooms:
+            return False, "Room does not exist."
+        if room_id not in self.invites or username not in self.invites[room_id]:
+            return False, "No invite for this user."
+        room = self.rooms[room_id]
+        if room.status != "waiting":
+            return False, "Room already started."
+        if len(room.players) >= 2:
+            return False, "Room already full (2 players)."
+        room.players.append(username)
+        # remove invite
+        self.invites[room_id].discard(username)
+        return True, f"{username} joined room {room_id} via invite"
+
+    def revoke_invite(self, room_id: int, host: str, target: str):
+        if room_id not in self.rooms:
+            return False, "Room does not exist."
+        room = self.rooms[room_id]
+        if room.host != host:
+            return False, "Only the host can revoke invites."
+        if room_id not in self.invites or target not in self.invites[room_id]:
+            return False, "Invite not found."
+        self.invites[room_id].discard(target)
+        return True, f"Invite for {target} revoked from room {room_id}"
 
     # -------------------------------------------------------
     # Start game
