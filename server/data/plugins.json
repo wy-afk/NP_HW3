@@ -1,0 +1,9 @@
+{
+  "plugins": [
+    {
+      "name": "Room Chat Plugin",
+      "desc": "Provides in-room group chat UI",
+      "version": "1.0"
+    }
+  ]
+}

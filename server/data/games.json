@@ -1,18 +1,14 @@
-[
-  {
-    "game_id": 1,
+{
+  "1": {
     "name": "Battleship",
     "version": "1.0",
-    "developer": "dev1",
     "path": "server/game_storage/Battleship/1.0",
-    "description": "Battleship version 1.0"
+    "owner": "1"
   },
-  {
-    "game_id": 2,
+  "2": {
     "name": "Tetris",
     "version": "1.0",
-    "developer": "dev1",
     "path": "server/game_storage/Tetris/1.0",
-    "description": "Tetris version 1.0"
+    "owner": "1"
   }
-]
+}

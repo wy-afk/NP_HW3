@@ -2,36 +2,382 @@
   "test1": {
     "password": "1234",
     "wins": 0,
-    "played": 0
+    "played": 0,
+    "installed_plugins": []
   },
   "dev1": {
     "password": "1234",
     "wins": 0,
-    "played": 0
+    "played": 0,
+    "installed_plugins": []
   },
   "dev2": {
     "password": "1234",
     "wins": 0,
-    "played": 0
+    "played": 0,
+    "installed_plugins": []
   },
   "user1": {
     "password": "1234",
     "wins": 0,
-    "played": 0
+    "played": 0,
+    "installed_plugins": []
   },
   "user2": {
     "password": "1234",
     "wins": 0,
-    "played": 0
+    "played": 0,
+    "installed_plugins": []
   },
   "u1": {
     "password": "123",
-    "wins": 3,
-    "played": 8
+    "wins": 4,
+    "played": 9,
+    "installed_plugins": [],
+    "played_games": []
   },
   "u2": {
     "password": "123",
-    "wins": 2,
-    "played": 8
+    "wins": 3,
+    "played": 10,
+    "installed_plugins": [],
+    "played_games": []
+  },
+  "p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "installed_plugins": []
+  },
+  "p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "installed_plugins": []
+  },
+  "alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "installed_plugins": []
+  },
+  "t1766016710871_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "installed_plugins": []
+  },
+  "t1766016710871_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "installed_plugins": []
+  },
+  "t1766016710886_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "installed_plugins": []
+  },
+  "t1766017117275_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "installed_plugins": []
+  },
+  "t1766017117275_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "installed_plugins": []
+  },
+  "t1766017117290_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "installed_plugins": []
+  },
+  "t1766017579430_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017579430_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017579447_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017627880_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017627880_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017627897_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017673730_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017673730_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017673747_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017819727_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017819727_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017819743_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017897099_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017897099_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766017897118_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018020877_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018020877_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018020897_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018062228_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018062228_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018062247_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018102955_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018102955_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018102973_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018129177_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018129177_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018129195_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "rv_player": {
+    "password": "pw",
+    "wins": 0,
+    "played": 1,
+    "played_games": [
+      "1"
+    ],
+    "installed_plugins": []
+  },
+  "rv_admin": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "role": "admin",
+    "installed_plugins": []
+  },
+  "t1766018272506_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018272506_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018272529_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018314910_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018314910_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766018314932_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766019163346_p1": {
+    "password": "x",
+    "wins": 1,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766019163346_p2": {
+    "password": "x",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "t1766019163369_alice": {
+    "password": "pw",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "u3": {
+    "password": "123",
+    "wins": 0,
+    "played": 1,
+    "played_games": [],
+    "installed_plugins": []
+  },
+  "1": {
+    "password": "1",
+    "wins": 0,
+    "played": 0,
+    "played_games": [],
+    "installed_plugins": []
   }
 }

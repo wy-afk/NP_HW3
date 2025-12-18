@@ -1,0 +1,7 @@
+{
+  "name": "Battleship",
+  "version": "1.0",
+  "server": {
+    "start_cmd": ["python3", "server/battleship_server.py", "--port", "{port}"]
+  }
+}

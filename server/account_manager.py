@@ -5,7 +5,21 @@ import threading
 from pathlib import Path
 from typing import Literal, Optional
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
+# Determine repo root by searching upward for a known marker (README.md) so
+# we resolve `server/data` reliably even when modules are imported from
+# temporary locations during tests.
+def _find_repo_root():
+    p = Path(__file__).resolve()
+    for _ in range(6):
+        root = p.parent
+        if (root / 'README.md').exists() or (root / '.git').exists():
+            return root
+        p = root
+    # fallback to file's parent
+    return Path(__file__).resolve().parent
+
+_repo_root = _find_repo_root()
+DATA_DIR = _repo_root / "server" / "data"
 PLAYERS_FILE = DATA_DIR / "players.json"
 DEVS_FILE = DATA_DIR / "developers.json"
 LEADERBOARD_FILE = DATA_DIR / "leaderboard.json"
@@ -24,6 +38,7 @@ def _load_json(path: Path) -> dict:
 
 
 def _save_json(path: Path, data: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -49,9 +64,18 @@ class AccountManager:
         for u, info in list(self.players.items()):
             if not isinstance(info, dict):
                 continue
-            if "wins" not in info or "played" not in info:
+            changed = False
+            if "wins" not in info:
                 info.setdefault("wins", 0)
+                changed = True
+            if "played" not in info:
                 info.setdefault("played", 0)
+                changed = True
+            # Ensure installed_plugins exists so plugin APIs can safely use it
+            if "installed_plugins" not in info:
+                info.setdefault("installed_plugins", [])
+                changed = True
+            if changed:
                 modified = True
         if modified:
             _save_json(PLAYERS_FILE, self.players)
@@ -99,44 +123,70 @@ class AccountManager:
     # ---------- API used by LobbyServer ----------
 
     def register(self, username: str, password: str, role: str) -> tuple[bool, str]:
-        if role not in ("player", "developer"):
+        # allow an 'admin' player role in addition to player/developer
+        if role not in ("player", "developer", "admin"):
             return False, "invalid_role"
 
-        store, path = self._get_store(role)
+        # Admin accounts are stored in the players store but have role 'admin'
+        store, path = self._get_store("player") if role == "admin" else self._get_store(role)
         if username in store:
             return False, "username_taken"
 
         if not username or not password:
             return False, "empty_username_or_password"
 
-        store[username] = {
-            "password": password,
-            # add more fields later (email, created_at, stats, etc.)
-        }
+        # initialize player/developer record; for players include stats
+        if role == "player" or role == "admin":
+            store[username] = {
+                "password": password,
+                "wins": 0,
+                "played": 0,
+                "played_games": [],
+                "installed_plugins": [],
+            }
+            if role == "admin":
+                store[username]["role"] = "admin"
+        else:
+            store[username] = {"password": password}
         _save_json(path, store)
         return True, "ok"
 
     def record_result(self, winners: list, players: list):
         """Record a finished game's result: increment 'played' for all players,
-        increment 'wins' for the winners, and persist the players file."""
+        increment 'wins' for the winners, record per-game play history, and persist the players file.
+
+        The optional `game_id` may be set on the AccountManager instance as
+        `self._last_game_id` by callers (lobby_server sets this when available).
+        """
+        game_id = getattr(self, '_last_game_id', None)
+
         modified = False
         for p in players:
             if p not in self.players:
                 # create a minimal record if missing
-                self.players[p] = {"password": "", "wins": 0, "played": 0}
+                self.players[p] = {"password": "", "wins": 0, "played": 0, "played_games": []}
                 modified = True
             # ensure fields
             self.players[p].setdefault("wins", 0)
             self.players[p].setdefault("played", 0)
+            self.players[p].setdefault("played_games", [])
             try:
                 self.players[p]["played"] = int(self.players[p].get("played", 0)) + 1
             except Exception:
                 self.players[p]["played"] = 1
+            # record per-game play history when available
+            try:
+                if game_id is not None:
+                    gidstr = str(game_id)
+                    if gidstr not in self.players[p]["played_games"]:
+                        self.players[p]["played_games"].append(gidstr)
+            except Exception:
+                pass
             modified = True
 
         for w in winners:
             if w not in self.players:
-                self.players[w] = {"password": "", "wins": 0, "played": 0}
+                self.players[w] = {"password": "", "wins": 0, "played": 0, "played_games": []}
             self.players[w].setdefault("wins", 0)
             try:
                 self.players[w]["wins"] = int(self.players[w].get("wins", 0)) + 1
@@ -205,7 +255,6 @@ class AccountManager:
     def login(self, username: str, password: str, role: str) -> tuple[bool, str]:
         if role not in ("player", "developer"):
             return False, "invalid_role"
-
         store, _ = self._get_store(role)
         user = store.get(username)
         if user is None:
@@ -220,7 +269,15 @@ class AccountManager:
             return False, "already_logged_in"
 
         # Accept login and mark session connected
-        self.online_users[username] = {"role": role, "connected": True, "last_seen": time.time()}
+        assigned_role = role
+        # If player store contains an admin flag, treat as admin
+        if role == "player":
+            pstore = self.players
+            info = pstore.get(username)
+            if info and info.get("role") == "admin":
+                assigned_role = "admin"
+
+        self.online_users[username] = {"role": assigned_role, "connected": True, "last_seen": time.time()}
         return True, "ok"
 
     def logout(self, username: str):
@@ -235,7 +292,12 @@ class AccountManager:
             self.online_users[username]["last_seen"] = time.time()
         else:
             # create a disconnected entry to reserve the username briefly
-            self.online_users[username] = {"role": "player", "connected": False, "last_seen": time.time()}
+            # Preserve correct role if the username exists in developers or players
+            if username in self.developers:
+                role = "developer"
+            else:
+                role = "player"
+            self.online_users[username] = {"role": role, "connected": False, "last_seen": time.time()}
 
     def is_online(self, username: str) -> bool:
         info = self.online_users.get(username)

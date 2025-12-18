@@ -10,8 +10,11 @@ class Room:
     host: str
     type: str  # "public" or "private"
     players: list = field(default_factory=list)
+    max_players: int = 2
     status: str = "waiting"  # waiting / running
     port: Optional[int] = None
+    # simple in-memory chat log: list of {user, msg, ts}
+    chat: list = field(default_factory=list)
 
 
 class RoomManager:
@@ -29,11 +32,11 @@ class RoomManager:
     # -------------------------------------------------------
     # Create room
     # -------------------------------------------------------
-    def create_room(self, game_id: int, username: str, room_type: str):
+    def create_room(self, game_id: int, username: str, room_type: str, max_players: int = 2):
         room_id = self.next_room_id
         self.next_room_id += 1
 
-        room = Room(room_id, game_id, username, room_type)
+        room = Room(room_id, game_id, username, room_type, max_players=max_players)
         room.players.append(username)  # host joins automatically
 
         self.rooms[room_id] = room
@@ -51,8 +54,8 @@ class RoomManager:
         if room.status != "waiting":
             return False, "Room already started."
 
-        if len(room.players) >= 2:
-            return False, "Room already full (2 players)."
+        if len(room.players) >= int(room.max_players or 2):
+            return False, f"Room already full ({int(room.max_players or 2)} players)."
 
         # PRIVATE ROOM RULE: ONLY HOST CAN JOIN
         if room.type == "private" and username != room.host:
@@ -101,12 +104,33 @@ class RoomManager:
         room = self.rooms[room_id]
         if room.status != "waiting":
             return False, "Room already started."
-        if len(room.players) >= 2:
-            return False, "Room already full (2 players)."
+        if len(room.players) >= int(room.max_players or 2):
+            return False, f"Room already full ({int(room.max_players or 2)} players)."
         room.players.append(username)
         # remove invite
         self.invites[room_id].discard(username)
         return True, f"{username} joined room {room_id} via invite"
+
+    def send_chat(self, room_id: int, username: str, message: str):
+        """Append a chat message to the room log. Only participants may send."""
+        if room_id not in self.rooms:
+            return False, "Room does not exist"
+        room = self.rooms[room_id]
+        if username not in room.players:
+            return False, "User not in room"
+        import time
+        entry = {"user": username, "msg": message, "ts": int(time.time())}
+        room.chat.append(entry)
+        # keep chat bounded (e.g., last 200 msgs)
+        if len(room.chat) > 200:
+            room.chat = room.chat[-200:]
+        return True, entry
+
+    def list_chat(self, room_id: int):
+        if room_id not in self.rooms:
+            return False, "Room does not exist"
+        room = self.rooms[room_id]
+        return True, list(room.chat)
 
     def revoke_invite(self, room_id: int, host: str, target: str):
         if room_id not in self.rooms:
